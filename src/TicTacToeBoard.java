@@ -6,21 +6,22 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public class GamePanel extends JPanel implements ActionListener {
+public class TicTacToeBoard extends JPanel implements ActionListener {
     char[][] board = new char[3][3];
     Timer timer;
     int panelHeight = 225;
     int panelWidth = 225;
     BufferedImage emptyBoard;
     char turn;
-    final char PLAYER_ONE = 'x';
-    final char PLAYER_TWO = 'o';
+    final char BOT_MOVE = 'x';
+    final char HUMAN_MOVE = 'o';
+    int movesLeft;
 
-    GamePanel() throws IOException {
+    TicTacToeBoard() throws IOException {
         this.setPreferredSize(new Dimension(panelHeight, panelWidth));
         this.setBackground(Color.white);
         this.setFocusable(true);
-        timer = new Timer(1000, this); // every 0.001 second, it'll look inside this GamePanel object for the //
+        timer = new Timer(600, this); // every 0.001 second, it'll look inside this GamePanel object for the //
         // actionPerformed method and call it
         timer.start(); // activating the timer
 
@@ -35,21 +36,27 @@ public class GamePanel extends JPanel implements ActionListener {
         emptyBoard = ImageIO
                 .read(new File("/Users/vithulravivarma/Desktop/TicTacToe/src/tic tac toe empty board.png"));
 
-        // x starts first
-        turn = PLAYER_ONE;
+        // initializing turn and amount of turns left
+        turn = BOT_MOVE;
+        movesLeft = 9;
     }
 
     public void paint(Graphics g) {
         super.paint(g);
+        // game over game play
         if (gameOver()) {
-            if (turn == PLAYER_ONE) {
+            if (turn == BOT_MOVE) {
                 System.out.println("you won!");
             } else {
                 System.out.println("you lost to the AI!");
             }
+        } else if (movesLeft == 0) {
+            System.out.println("tied");
         } else {
-            if (turn == PLAYER_ONE) {
-                randomPlacement();
+            // regular gameplay
+            if (turn == BOT_MOVE) {
+                oneMoveAhead();
+                movesLeft--;
             }
         }
         drawBoard(g);
@@ -61,14 +68,37 @@ public class GamePanel extends JPanel implements ActionListener {
             int xPos = (int) (Math.random() * 3);
             int yPos = (int) (Math.random() * 3);
             if (board[xPos][yPos] == ' ') {
-                board[xPos][yPos] = PLAYER_ONE;
-                turn = PLAYER_TWO;
+                board[xPos][yPos] = BOT_MOVE;
+                turn = HUMAN_MOVE;
                 break;
             }
         }
     }
 
-    
+    private void oneMoveAhead() {
+        if (movesLeft > 5) {
+            // cannot have a game winning move before at least four spots are filled
+            randomPlacement();
+            return;
+        }
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == ' ') {
+                    board[i][j] = BOT_MOVE;
+                    if (gameOver()) {
+                        return;
+                    }
+                    // resetting board value if not game winning move
+                    board[i][j] = ' ';
+                }
+            }
+        }
+        // only reaches here if there was no game winning move to be made
+        randomPlacement();
+    }
+
+
 
     private void drawBoard(Graphics g) {
         g.drawImage(emptyBoard, 0, 0, this);
