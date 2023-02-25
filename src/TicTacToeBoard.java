@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class TicTacToeBoard extends JPanel implements ActionListener {
     char[][] board2 = new char[3][3];
@@ -37,7 +38,7 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
                 .read(new File("/Users/vithulravivarma/Desktop/TicTacToe/src/tic tac toe empty board.png"));
 
         // initializing turn and amount of turns left
-        turn = BOT_MOVE;
+        turn = HUMAN_MOVE;
         movesLeft = 9;
     }
 
@@ -55,10 +56,7 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         } else {
             // regular gameplay
             if (turn == BOT_MOVE) {
-//                randomPlacement();
-                oneMoveAhead();
-//                minMaxDepthTwo();
-                movesLeft--;
+                minMax();
                 turn = HUMAN_MOVE;
             }
         }
@@ -67,106 +65,102 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
     }
 
     private void minMax() {
+        HashMap<Integer, Integer> availableMoves = getAvailableMoves();
+        // iterating through available moves, using backtracking to revert board
+        // after move is evaluated through minMax
+        for (int position: availableMoves.keySet()) {
+            board[position] = BOT_MOVE;
+            availableMoves.put(position, availableMoves.get(position) + minMaxHelperHuman());
+            board[position] = ' ';
+        }
 
-    }
-
-    private int minMaxHelper(int a) {
-        return a;
-    }
-
-    private void minMaxDepthTwo() {
-        System.out.println(turn);
-        int[] bestMove = new int[2];
-        bestMove[0] = -1;
-        bestMove[1] = -1;
-
-        int maxWinPotential = 0;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                if (board2[row][col] == ' ') {
-                    turn = BOT_MOVE;
-                    board2[row][col] = turn;
-                    printBoardToConsole();
-                    turn = HUMAN_MOVE;
-                    movesLeft--;
-                    int moveWinTotal = minMaxDepthTwoHelper(0);
-                    //printBoardToConsole();
-                    System.out.println("win total :" + moveWinTotal + " row " + row + " col " + col);
-                    if (moveWinTotal > maxWinPotential) {
-                        bestMove[0] = row;
-                        bestMove[1] = col;
-                        maxWinPotential = moveWinTotal;
-                    }
-                    movesLeft++;
-                    board2[row][col] = ' ';
-                }
+        // iterating through HashMap to find best move
+        int maxPointTotal = -1000000;
+        int bestPosition = -1;
+        for (int position: availableMoves.keySet()) {
+            if (availableMoves.get(position) > maxPointTotal) {
+                maxPointTotal = availableMoves.get(position);
+                bestPosition = position;
             }
         }
-//        if (board[0][0] == ' ') {
-//            board[0][0] = BOT_MOVE;
-//            movesLeft--;
-//            int moveWinTotal = minMaxDepthTwoHelper(0);
-//            if (moveWinTotal > maxWinPotential) {
-//                bestMove[0] = 0;
-//                bestMove[1] = 0;
-//                maxWinPotential = moveWinTotal;
-//            }
-//            movesLeft++;
-//            board[0][0] = ' ';
+        // finally implementing the move
+        board[bestPosition] = BOT_MOVE;
+        movesLeft--;
+        System.out.println("right after bot move: " + movesLeft);
+    }
+
+    private int minMaxHelperHuman() {
+        // if game over, return appropriate point total
+        if (gameOver()) return 10;
+        // if there are no moves left, no point total to be found
+        if (movesLeft == 0) return 0;
+        HashMap<Integer, Integer> availableMoves = getAvailableMoves();
+        // no available moves means there's no moves left
+//        if (availableMoves.isEmpty()) {
+//            System.out.println(movesLeft);
+//            return 0;
 //        }
-        if (bestMove[0] == -1) {
-            System.out.println("in random placement: max win potential of " + maxWinPotential);
-            randomPlacement();
-        } else {
-            board2[bestMove[0]][bestMove[1]] = BOT_MOVE;
-            System.out.println("in actual placement: max win potential of " + maxWinPotential);
+        // iterating through available moves, using backtracking to revert board
+        // after move is evaluated through minMax
+        for (int position: availableMoves.keySet()) {
+            board[position] = HUMAN_MOVE;
+            movesLeft--;
+            availableMoves.put(position, availableMoves.get(position) + minMaxHelperBot());
+            movesLeft++;
+            board[position] = ' ';
         }
-    }
 
-    private int minMaxDepthTwoHelper(int currentWins) {
-        int[] bestMove = new int[2];
-        if (movesLeft == 0) {
-            return currentWins;
-        }
-        int maxWinPotential = 0;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                int currentWinPotential = 0;
-                if (board2[row][col] == ' ') {
-                    board2[row][col] = turn;
-                    movesLeft--;
-                    if (gameOver()) {
-                        if (turn == BOT_MOVE) currentWinPotential++;
-                        else currentWinPotential--;
-                    }
-                    if (turn == BOT_MOVE) turn = HUMAN_MOVE;
-                    else turn = BOT_MOVE;
-                    int winsToAdd = minMaxDepthTwoHelper(currentWinPotential);
-                    currentWinPotential += winsToAdd;
-                    if (turn == BOT_MOVE && currentWinPotential > maxWinPotential) {
-                        maxWinPotential = currentWinPotential;
-                        bestMove[0] = row;
-                        bestMove[1] = col;
-                    }
-                    if (turn == HUMAN_MOVE && currentWinPotential < maxWinPotential) {
-                        maxWinPotential = currentWinPotential;
-                        bestMove[0] = row;
-                        bestMove[1] = col;
-                    }
-
-
-                    movesLeft++;
-                    board2[row][col] = ' ';
-                }
+        // iterating through HashMap to find best move
+        int minPointTotal = 1000000;
+        for (int position: availableMoves.keySet()) {
+            if (availableMoves.get(position) < minPointTotal) {
+                minPointTotal = availableMoves.get(position);
             }
         }
+        return minPointTotal;
+    }
 
-        //System.out.println("max win potential being returned on " + turn + " of " + maxWinPotential);
-        return maxWinPotential;
+    private int minMaxHelperBot() {
+        // if game over, return appropriate point total
+        if (gameOver()) return -10;
+        // if there are no moves left, no point total to be found
+        if (movesLeft == 0) return 0;
+        HashMap<Integer, Integer> availableMoves = getAvailableMoves();
+        // iterating through available moves, using backtracking to revert board
+        // after move is evaluated through minMax
+        for (int position: availableMoves.keySet()) {
+            board[position] = BOT_MOVE;
+            movesLeft--;
+            //System.out.println("for position " + position + " in bot");
+            //printBoardToConsole();
+            availableMoves.put(position, availableMoves.get(position) + minMaxHelperHuman());
+            movesLeft++;
+            board[position] = ' ';
+        }
+        // iterating through HashMap to find best move
+        int maxPointTotal = -1000000;
+        for (int position: availableMoves.keySet()) {
+            if (availableMoves.get(position) > maxPointTotal) {
+                maxPointTotal = availableMoves.get(position);
+            }
+        }
+        return maxPointTotal;
+    }
+
+    private HashMap<Integer, Integer> getAvailableMoves() {
+        HashMap<Integer, Integer> availableMoves = new HashMap<>();
+        for (int position = 0; position < 9; position++) {
+            if (board[position] == ' ') {
+                availableMoves.put(position, 0);
+            }
+        }
+        return availableMoves;
     }
 
     private void printBoardToConsole() {
-        System.out.println(Arrays.toString(board));
+        System.out.println(board[0] + " " + board[1] + " " + board[2]);
+        System.out.println(board[3] + " " + board[4] + " " + board[5]);
+        System.out.println(board[6] + " " + board[7] + " " + board[8]);
     }
 
     private void randomPlacement() {
@@ -267,5 +261,35 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         if (board[0] == board[4] && board[4] == board[8]) return true;
         if (board[2] == board[4] && board[4] == board[6]) return true;
         return false;
+    }
+
+    public void boardScenarioOne() {
+        board[0] = 'o';
+        board[1] = 'x';
+        board[2] = 'o';
+        board[3] = 'x';
+        board[4] = 'o';
+        board[5] = 'o';
+        board[6] = ' ';
+        board[7] = 'x';
+        board[8] = 'x';
+        // o x o
+        // x o o
+        //   x x
+    }
+
+    public void boardScenarioTwo() {
+        board[0] = 'o';
+        board[1] = 'x';
+        board[2] = 'o';
+        board[3] = 'x';
+        board[4] = ' ';
+        board[5] = ' ';
+        board[6] = 'x';
+        board[7] = 'o';
+        board[8] = ' ';
+        // o x o
+        // x
+        // x o
     }
 }
