@@ -63,8 +63,9 @@ public class GameFrame extends JFrame implements MouseListener{
 
 
     private boolean insertChar(int row, int column, char toInsert) {
-        if (newGP.board[row][column] == ' ') {
-            newGP.board[row][column] = toInsert;
+        int position = (row * 3) + column;
+        if (newGP.board[position] == ' ') {
+            newGP.board[position] = toInsert;
             return true;
         }
         return false;
