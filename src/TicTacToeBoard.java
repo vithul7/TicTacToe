@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 public class TicTacToeBoard extends JPanel implements ActionListener {
-    char[][] board2 = new char[3][3];
     char[] board = new char[9];
     Timer timer;
     int panelHeight = 225;
@@ -38,7 +37,7 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
                 .read(new File("/Users/vithulravivarma/Desktop/TicTacToe/src/tic tac toe empty board.png"));
 
         // initializing turn and amount of turns left
-        turn = HUMAN_MOVE;
+        turn = BOT_MOVE;
         movesLeft = 9;
     }
 
@@ -70,7 +69,7 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         // after move is evaluated through minMax
         for (int position: availableMoves.keySet()) {
             board[position] = BOT_MOVE;
-            availableMoves.put(position, availableMoves.get(position) + minMaxHelperHuman());
+            availableMoves.put(position, availableMoves.get(position) + minMaxHelperHuman(1));
             board[position] = ' ';
         }
 
@@ -86,27 +85,24 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         // finally implementing the move
         board[bestPosition] = BOT_MOVE;
         movesLeft--;
-        System.out.println("right after bot move: " + movesLeft);
+
     }
 
-    private int minMaxHelperHuman() {
+    private int minMaxHelperHuman(int depth) {
         // if game over, return appropriate point total
-        if (gameOver()) return 10;
+        if (gameOver()) return 10 - depth;
         // if there are no moves left, no point total to be found
-        if (movesLeft == 0) return 0;
         HashMap<Integer, Integer> availableMoves = getAvailableMoves();
-        // no available moves means there's no moves left
-//        if (availableMoves.isEmpty()) {
-//            System.out.println(movesLeft);
-//            return 0;
-//        }
+        if (availableMoves.isEmpty()) {
+            return 0;
+        }
         // iterating through available moves, using backtracking to revert board
         // after move is evaluated through minMax
         for (int position: availableMoves.keySet()) {
             board[position] = HUMAN_MOVE;
-            movesLeft--;
-            availableMoves.put(position, availableMoves.get(position) + minMaxHelperBot());
-            movesLeft++;
+            depth += 1;
+            availableMoves.put(position, availableMoves.get(position) + minMaxHelperBot(depth));
+            depth -= 1;
             board[position] = ' ';
         }
 
@@ -120,21 +116,21 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         return minPointTotal;
     }
 
-    private int minMaxHelperBot() {
+    private int minMaxHelperBot(int depth) {
         // if game over, return appropriate point total
-        if (gameOver()) return -10;
+        if (gameOver()) return (depth + 1) - 10;
         // if there are no moves left, no point total to be found
-        if (movesLeft == 0) return 0;
         HashMap<Integer, Integer> availableMoves = getAvailableMoves();
+        if (availableMoves.isEmpty()) {
+            return 0;
+        }
         // iterating through available moves, using backtracking to revert board
         // after move is evaluated through minMax
         for (int position: availableMoves.keySet()) {
             board[position] = BOT_MOVE;
-            movesLeft--;
-            //System.out.println("for position " + position + " in bot");
-            //printBoardToConsole();
-            availableMoves.put(position, availableMoves.get(position) + minMaxHelperHuman());
-            movesLeft++;
+            depth += 1;
+            availableMoves.put(position, availableMoves.get(position) + minMaxHelperHuman(depth));
+            depth -= 1;
             board[position] = ' ';
         }
         // iterating through HashMap to find best move
@@ -220,15 +216,6 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
 
     }
 
-    public int pointAssignment() {
-        int points = 0;
-        if (gameOver()) {
-            if (turn == BOT_MOVE) points -= 10;
-            else if (turn == HUMAN_MOVE) points += 10;
-        }
-        return points;
-    }
-
     public boolean gameOver() {
         if (rowCheck()) {
             return true;
@@ -273,6 +260,7 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         board[6] = ' ';
         board[7] = 'x';
         board[8] = 'x';
+        movesLeft = 1;
         // o x o
         // x o o
         //   x x
@@ -288,8 +276,42 @@ public class TicTacToeBoard extends JPanel implements ActionListener {
         board[6] = 'x';
         board[7] = 'o';
         board[8] = ' ';
+        movesLeft = 3;
         // o x o
         // x
         // x o
+    }
+
+    public void boardScenarioThree() {
+        board[0] = ' ';
+        board[1] = 'o';
+        board[2] = ' ';
+        board[3] = ' ';
+        board[4] = ' ';
+        board[5] = 'o';
+        board[6] = 'x';
+        board[7] = 'x';
+        board[8] = 'o';
+        movesLeft = 4;
+        //   x
+        //     x
+        // o o x
+    }
+
+    public void boardScenarioFour() {
+        board[0] = 'x';
+        board[1] = 'o';
+        board[2] = ' ';
+        board[3] = ' ';
+        board[4] = 'x';
+        board[5] = ' ';
+        board[6] = ' ';
+        board[7] = ' ';
+        board[8] = 'o';
+        turn = BOT_MOVE;
+        movesLeft = 5;
+        // x o
+        //   x
+        //     o
     }
 }

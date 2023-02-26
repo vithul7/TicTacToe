@@ -25,9 +25,7 @@ public class GameFrame extends JFrame implements MouseListener{
         if (newGP.turn == newGP.HUMAN_MOVE) {
             if (validMove(newGP.HUMAN_MOVE, e.getX(), e.getY())) {
                 newGP.turn = newGP.BOT_MOVE;
-                System.out.println("pre subtraction user: " + newGP.movesLeft);
                 newGP.movesLeft--;
-                System.out.println("post subtraction user: " + newGP.movesLeft);
             }
         }
 
